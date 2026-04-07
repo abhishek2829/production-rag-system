@@ -47,7 +47,21 @@ class Settings(BaseSettings):
     )
 
     # --- Retrieval ---
-    retrieval_top_k: int = Field(default=5, description="Number of chunks to retrieve")
+    retrieval_top_k: int = Field(default=5, description="Final number of chunks after re-ranking")
+    retrieval_initial_k: int = Field(
+        default=10,
+        description="Number of chunks to fetch from each retriever before re-ranking",
+    )
+    use_hybrid_retrieval: bool = Field(
+        default=True, description="Enable hybrid retrieval (vector + BM25)"
+    )
+    use_reranker: bool = Field(
+        default=True, description="Enable cross-encoder re-ranking"
+    )
+    reranker_model: str = Field(
+        default="cross-encoder/ms-marco-MiniLM-L-6-v2",
+        description="Cross-encoder model for re-ranking",
+    )
 
     # --- Storage ---
     chroma_persist_dir: Path = Field(

@@ -1,11 +1,11 @@
 """Answer generation with citation enforcement using Anthropic Claude.
 
 The generator takes retrieved chunks and produces a cited answer.
-Prompts are loaded from version-controlled YAML files — never hardcoded.
+Prompts are loaded from version-controlled YAML files via the PromptManager.
 
 Key design decisions:
-- Uses Anthropic Claude instead of OpenAI — shows multi-provider capability
-- Prompts live in configs/ and are version-controlled with the code
+- Uses Anthropic Claude — shows multi-provider capability
+- Prompts are versioned — every response records which prompt version was used
 - System prompt enforces citation rules and refusal when unsupported
 - Each source chunk is numbered for traceable citations [Source N]
 - Temperature=0 for deterministic, reproducible outputs
@@ -16,10 +16,10 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-import yaml
 from anthropic import Anthropic
 
 from rag.config import Settings
+from rag.generation.prompt_manager import PromptConfig, load_prompt_config
 from rag.models import RAGResponse, RetrievedChunk
 
 logger = logging.getLogger(__name__)
@@ -29,26 +29,34 @@ class AnswerGenerator:
     """Generates cited answers from retrieved chunks using Anthropic Claude.
 
     Uses the Anthropic SDK directly for the generation step.
-    This gives us full control over the response format and
-    makes the code easier to understand and debug.
+    Loads versioned prompts from YAML config files.
     """
 
     def __init__(self, settings: Settings, prompts_path: Path | None = None) -> None:
         self._settings = settings
         self._client = Anthropic(api_key=settings.anthropic_api_key)
 
-        # Load prompts from version-controlled YAML
+        # Load versioned prompt config
         if prompts_path is None:
             prompts_path = Path("configs/prompts.yaml")
 
-        with open(prompts_path) as f:
-            self._prompts = yaml.safe_load(f)
+        self._prompt_config = load_prompt_config(prompts_path)
 
-        logger.info("Generator initialized with model=%s", settings.llm_model)
+        logger.info(
+            "Generator initialized: model=%s, prompt_version=%s, prompt_hash=%s",
+            settings.llm_model,
+            self._prompt_config.version,
+            self._prompt_config.content_hash,
+        )
+
+    @property
+    def prompt_config(self) -> PromptConfig:
+        """Current prompt configuration (for logging/tracing)."""
+        return self._prompt_config
 
     def _format_context(self, chunks: list[RetrievedChunk]) -> str:
         """Format retrieved chunks into numbered source blocks."""
-        template = self._prompts["context_chunk_template"]
+        template = self._prompt_config.context_chunk_template
         sections = []
         for i, rc in enumerate(chunks, start=1):
             section = template.format(
@@ -87,8 +95,8 @@ class AnswerGenerator:
         # Format the context from retrieved chunks
         context = self._format_context(retrieved_chunks)
 
-        # Build the user prompt
-        user_prompt = self._prompts["user_prompt_template"].format(
+        # Build the user prompt from versioned template
+        user_prompt = self._prompt_config.user_prompt_template.format(
             context=context,
             question=query,
         )
@@ -99,7 +107,7 @@ class AnswerGenerator:
             model=self._settings.llm_model,
             temperature=self._settings.llm_temperature,
             max_tokens=self._settings.llm_max_tokens,
-            system=self._prompts["system_prompt"],
+            system=self._prompt_config.system_prompt,
             messages=[
                 {"role": "user", "content": user_prompt},
             ],
@@ -114,11 +122,13 @@ class AnswerGenerator:
         output_tokens = response.usage.output_tokens
 
         logger.info(
-            "Generated answer: %d chars, %d citations, %d+%d tokens (in+out)",
+            "Generated answer: %d chars, %d citations, %d+%d tokens (in+out), "
+            "prompt_version=%s",
             len(answer),
             len(citations),
             input_tokens,
             output_tokens,
+            self._prompt_config.version,
         )
 
         return RAGResponse(
@@ -134,8 +144,6 @@ class AnswerGenerator:
         """Extract which source chunks were actually cited in the answer.
 
         Looks for [Source N] patterns and maps them back to retrieved chunks.
-        This is important for observability — we track citation coverage
-        (what % of retrieved chunks were actually used).
         """
         cited: list[RetrievedChunk] = []
         for i, chunk in enumerate(chunks, start=1):

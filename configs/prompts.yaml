@@ -1,6 +1,9 @@
 # Version-controlled prompt templates.
 # These are tracked in Git so changes are auditable and rollback-able.
-# Phase 2 will add prompt versioning with experiment tracking.
+# Every response logs which version generated it for traceability.
+# IMPORTANT: Bump the version number whenever you change any prompt below.
+
+version: "1.0"
 
 system_prompt: |
   You are a precise, helpful assistant that answers questions based ONLY on the

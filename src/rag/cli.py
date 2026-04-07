@@ -84,12 +84,12 @@ def query(question: str | None, top_k: int | None) -> None:
 
 def _run_query(pipeline: RAGPipeline, question: str, top_k: int | None) -> None:
     """Execute a single query and display results."""
-    response = pipeline.query(question, top_k=top_k)
+    response, citation_report = pipeline.query(question, top_k=top_k)
 
     # Display the answer
     console.print(Panel(response.answer, title="Answer", border_style="green"))
 
-    # Display citations
+    # Display citations table
     if response.citations:
         table = Table(title="Citations Used")
         table.add_column("Source", style="cyan")
@@ -104,9 +104,39 @@ def _run_query(pipeline: RAGPipeline, question: str, top_k: int | None) -> None:
             )
         console.print(table)
 
+    # Display citation validation report
+    if citation_report.is_refusal:
+        console.print(
+            Panel(
+                "[yellow]Model correctly refused to answer "
+                "(sources don't support the question)[/]",
+                title="Citation Check",
+                border_style="yellow",
+            )
+        )
+    elif citation_report.is_valid:
+        console.print(
+            Panel(
+                f"[green]All citations valid[/]\n"
+                f"Sources cited: {citation_report.cited_sources}\n"
+                f"Coverage: {citation_report.citation_coverage:.0%}",
+                title="Citation Check PASSED",
+                border_style="green",
+            )
+        )
+    else:
+        issues_text = "\n".join(f"  - {issue}" for issue in citation_report.issues)
+        console.print(
+            Panel(
+                f"[red]Citation issues found:[/]\n{issues_text}",
+                title="Citation Check FAILED",
+                border_style="red",
+            )
+        )
+
     # Display stats
     console.print(
         f"\n[dim]Retrieved: {len(response.retrieved_chunks)} chunks | "
         f"Cited: {len(response.citations)} chunks | "
-        f"Citation coverage: {len(response.citations)}/{len(response.retrieved_chunks)}[/]"
+        f"Coverage: {citation_report.citation_coverage:.0%}[/]"
     )
