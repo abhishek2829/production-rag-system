@@ -1,0 +1,186 @@
+[
+    {
+        "id": "rag_definition",
+        "question": "What is Retrieval-Augmented Generation?",
+        "expected_behavior": "answer",
+        "expected_sources": ["retrieval_augmented_generation.md"],
+        "must_contain": ["retrieval", "documents", "generation"],
+        "notes": "Basic definition question — should cite the RAG document"
+    },
+    {
+        "id": "rag_stages",
+        "question": "What are the three main stages of the RAG pipeline?",
+        "expected_behavior": "answer",
+        "expected_sources": ["retrieval_augmented_generation.md"],
+        "must_contain": ["indexing", "retrieval", "generation"],
+        "notes": "Should list all three stages with details"
+    },
+    {
+        "id": "rag_hallucination",
+        "question": "How does RAG reduce hallucination?",
+        "expected_behavior": "answer",
+        "expected_sources": ["retrieval_augmented_generation.md"],
+        "must_contain": ["grounding", "documents"],
+        "notes": "Should explain grounding in documents reduces hallucination"
+    },
+    {
+        "id": "rag_benefits",
+        "question": "What are the benefits of using RAG over plain LLMs?",
+        "expected_behavior": "answer",
+        "expected_sources": ["retrieval_augmented_generation.md"],
+        "must_contain": ["hallucination", "up-to-date"],
+        "notes": "Should list multiple benefits from the source document"
+    },
+    {
+        "id": "hybrid_retrieval",
+        "question": "What is hybrid retrieval and why is it better than vector search alone?",
+        "expected_behavior": "answer",
+        "expected_sources": ["retrieval_augmented_generation.md"],
+        "must_contain": ["BM25", "vector"],
+        "notes": "Should explain combining dense and sparse retrieval"
+    },
+    {
+        "id": "reranking",
+        "question": "What is re-ranking in RAG systems?",
+        "expected_behavior": "answer",
+        "expected_sources": ["retrieval_augmented_generation.md"],
+        "must_contain": ["cross-encoder"],
+        "notes": "Should explain cross-encoder re-ranking after initial retrieval"
+    },
+    {
+        "id": "chromadb_description",
+        "question": "What is ChromaDB?",
+        "expected_behavior": "answer",
+        "expected_sources": ["vector_databases.md"],
+        "must_contain": ["open-source", "embedding"],
+        "notes": "Should describe ChromaDB from the vector databases document"
+    },
+    {
+        "id": "pinecone_vs_chroma",
+        "question": "When should I use Pinecone instead of ChromaDB?",
+        "expected_behavior": "answer",
+        "expected_sources": ["vector_databases.md"],
+        "must_contain": ["scale", "managed"],
+        "notes": "Should contrast Pinecone (managed, scale) vs ChromaDB (local, prototyping)"
+    },
+    {
+        "id": "cosine_similarity",
+        "question": "What is cosine similarity and how is it used in vector databases?",
+        "expected_behavior": "answer",
+        "expected_sources": ["vector_databases.md"],
+        "must_contain": ["angle", "vectors"],
+        "notes": "Should explain cosine similarity as measuring angle between vectors"
+    },
+    {
+        "id": "hnsw_algorithm",
+        "question": "What is HNSW and how does it work?",
+        "expected_behavior": "answer",
+        "expected_sources": ["vector_databases.md"],
+        "must_contain": ["graph", "approximate", "nearest neighbor"],
+        "notes": "Should explain HNSW as a graph-based ANN algorithm"
+    },
+    {
+        "id": "embedding_explanation",
+        "question": "How do vector embeddings work?",
+        "expected_behavior": "answer",
+        "expected_sources": ["vector_databases.md"],
+        "must_contain": ["numerical", "similar"],
+        "notes": "Should explain embeddings as numerical representations where similar items are close"
+    },
+    {
+        "id": "faithfulness_metric",
+        "question": "What is faithfulness in RAG evaluation?",
+        "expected_behavior": "answer",
+        "expected_sources": ["llm_evaluation.md"],
+        "must_contain": ["supported", "context"],
+        "notes": "Should define faithfulness as whether answer is supported by retrieved context"
+    },
+    {
+        "id": "golden_dataset_eval",
+        "question": "How do you evaluate a RAG system using a golden dataset?",
+        "expected_behavior": "answer",
+        "expected_sources": ["llm_evaluation.md"],
+        "must_contain": ["question-answer pairs", "correct answers"],
+        "notes": "Should explain golden dataset evaluation approach"
+    },
+    {
+        "id": "llm_as_judge",
+        "question": "What is LLM-as-Judge evaluation?",
+        "expected_behavior": "answer",
+        "expected_sources": ["llm_evaluation.md"],
+        "must_contain": ["separate LLM", "evaluate"],
+        "notes": "Should explain using a separate LLM to judge answer quality"
+    },
+    {
+        "id": "ci_regression_gating",
+        "question": "How do you integrate RAG evaluation into CI/CD?",
+        "expected_behavior": "answer",
+        "expected_sources": ["llm_evaluation.md"],
+        "must_contain": ["threshold", "regression"],
+        "notes": "Should explain setting quality thresholds and failing CI when quality drops"
+    },
+    {
+        "id": "eval_tools",
+        "question": "What tools are available for RAG evaluation?",
+        "expected_behavior": "answer",
+        "expected_sources": ["llm_evaluation.md"],
+        "must_contain": ["RAGAS"],
+        "notes": "Should mention RAGAS, LangSmith, Langfuse, or BrainTrust"
+    },
+    {
+        "id": "keyword_search_hnsw",
+        "question": "HNSW",
+        "expected_behavior": "answer",
+        "expected_sources": ["vector_databases.md"],
+        "must_contain": ["graph"],
+        "notes": "Single keyword query — tests BM25 keyword retrieval"
+    },
+    {
+        "id": "refuse_biryani",
+        "question": "What is the best recipe for biryani?",
+        "expected_behavior": "refuse",
+        "expected_sources": [],
+        "must_contain": [],
+        "notes": "Should refuse — no cooking information in our documents"
+    },
+    {
+        "id": "refuse_weather",
+        "question": "What will the weather be like tomorrow in Bangalore?",
+        "expected_behavior": "refuse",
+        "expected_sources": [],
+        "must_contain": [],
+        "notes": "Should refuse — no weather information in our documents"
+    },
+    {
+        "id": "refuse_python_code",
+        "question": "Write me a Python function to sort a list",
+        "expected_behavior": "refuse",
+        "expected_sources": [],
+        "must_contain": [],
+        "notes": "Should refuse — not a question about our documents"
+    },
+    {
+        "id": "refuse_personal",
+        "question": "Who is the CEO of Anthropic?",
+        "expected_behavior": "refuse",
+        "expected_sources": [],
+        "must_contain": [],
+        "notes": "Should refuse — no information about Anthropic leadership in our docs"
+    },
+    {
+        "id": "cross_document",
+        "question": "How does faithfulness relate to RAG's ability to reduce hallucination?",
+        "expected_behavior": "answer",
+        "expected_sources": ["llm_evaluation.md", "retrieval_augmented_generation.md"],
+        "must_contain": ["faithfulness", "hallucination"],
+        "notes": "Cross-document question — should cite from both evaluation and RAG docs"
+    },
+    {
+        "id": "vector_db_best_practices",
+        "question": "What are the best practices for using vector databases?",
+        "expected_behavior": "answer",
+        "expected_sources": ["vector_databases.md"],
+        "must_contain": ["embedding model", "benchmark"],
+        "notes": "Should list best practices from the vector databases document"
+    }
+]

@@ -48,6 +48,7 @@ hybrid = [
 [project.scripts]
 rag-ingest = "rag.cli:ingest"
 rag-query = "rag.cli:query"
+rag-eval = "rag.evaluation.cli:evaluate"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/rag"]

@@ -49,3 +49,46 @@ jobs:
         run: pip install -e ".[dev]"
       - name: Type check with mypy
         run: mypy src/rag/ --ignore-missing-imports
+
+  # RAG Quality Gate — runs the golden dataset evaluation
+  # Only runs when ANTHROPIC_API_KEY secret is configured in GitHub
+  # To set up: GitHub repo → Settings → Secrets → New repository secret
+  rag-quality-gate:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: [lint, test]  # only run after lint and tests pass
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+
+      - name: Ingest test documents
+        env:
+          RAG_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$RAG_ANTHROPIC_API_KEY" ]; then
+            echo "⚠️ ANTHROPIC_API_KEY not set — skipping quality gate"
+            exit 0
+          fi
+          rag-ingest --dir ./data/documents
+
+      - name: Run RAG evaluation
+        env:
+          RAG_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$RAG_ANTHROPIC_API_KEY" ]; then
+            echo "⚠️ ANTHROPIC_API_KEY not set — skipping quality gate"
+            exit 0
+          fi
+          rag-eval --threshold 0.85 --output eval/results.json
+
+      - name: Upload evaluation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: eval/results.json
+          if-no-files-found: ignore
