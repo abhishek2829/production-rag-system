@@ -79,6 +79,22 @@ class Settings(BaseSettings):
         description="Directory containing source documents to ingest",
     )
 
+    # --- Observability (Project 3 — Langfuse) ---
+    langfuse_public_key: str | None = Field(
+        default=None, description="Langfuse public key (project identifier)"
+    )
+    langfuse_secret_key: str | None = Field(
+        default=None, description="Langfuse secret key (authentication)"
+    )
+    langfuse_host: str = Field(
+        default="http://localhost:3000",
+        description="Langfuse server URL",
+    )
+    enable_tracing: bool = Field(
+        default=False,
+        description="Enable Langfuse tracing (set to true to start recording traces)",
+    )
+
 
 def get_settings() -> Settings:
     """Factory function for settings. Allows easy mocking in tests."""
