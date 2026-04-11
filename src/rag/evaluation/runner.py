@@ -150,6 +150,7 @@ def _check_content(case: EvalCase, response: RAGResponse) -> tuple[bool, list[st
 def run_evaluation(
     pipeline: RAGPipeline,
     dataset_path: Path,
+    session_id: str | None = None,
 ) -> EvalReport:
     """Run the full evaluation against the golden dataset.
 
@@ -158,10 +159,13 @@ def run_evaluation(
     2. Runs each through the pipeline
     3. Grades each response
     4. Calculates aggregate scores
+    5. (If traced) Logs everything to Langfuse under one session
 
     Args:
         pipeline: The RAG pipeline to evaluate.
         dataset_path: Path to the golden dataset JSON file.
+        session_id: If provided, groups all eval traces under this session
+                    in Langfuse. Only works with TracedRAGPipeline.
 
     Returns:
         EvalReport with detailed results and aggregate scores.
@@ -175,8 +179,19 @@ def run_evaluation(
         logger.info("[%d/%d] Evaluating: %s", i, len(cases), case.id)
 
         # Run the question through the pipeline and measure time
+        # If pipeline is TracedRAGPipeline, pass session_id and user_id
+        # If it's regular RAGPipeline, the extra kwargs are ignored
         start_time = time.time()
-        response, citation_report = pipeline.query(case.question)
+        try:
+            # Try with session_id (works for TracedRAGPipeline)
+            response, citation_report = pipeline.query(
+                case.question,
+                session_id=session_id,
+                user_id="eval_bot",
+            )
+        except TypeError:
+            # Falls back for regular RAGPipeline (doesn't accept session_id)
+            response, citation_report = pipeline.query(case.question)
         latency = time.time() - start_time
 
         # Grade the response

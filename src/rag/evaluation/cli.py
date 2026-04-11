@@ -139,15 +139,29 @@ def _display_report(report: EvalReport, threshold: float) -> None:
     default=None,
     help="Save detailed results to a JSON file",
 )
-def evaluate(dataset: Path, threshold: float, output: Path | None) -> None:
+@click.option(
+    "--traced",
+    is_flag=True,
+    default=False,
+    help="Use TracedRAGPipeline to log eval to Langfuse dashboard",
+)
+def evaluate(dataset: Path, threshold: float, output: Path | None, traced: bool) -> None:
     """Run RAG evaluation against a golden dataset."""
+    from datetime import datetime
+
+    mode = "TRACED (Langfuse)" if traced else "standard"
     console.print(
         f"\n[bold blue]Running evaluation against:[/] {dataset}\n"
         f"[bold blue]Quality threshold:[/] {threshold:.0%}\n"
+        f"[bold blue]Mode:[/] {mode}\n"
     )
 
-    # Initialize pipeline
-    pipeline = RAGPipeline()
+    # Initialize pipeline — traced or standard
+    if traced:
+        from rag.observability.traced_pipeline import TracedRAGPipeline
+        pipeline = TracedRAGPipeline()
+    else:
+        pipeline = RAGPipeline()
 
     if pipeline.chunk_count == 0:
         console.print(
@@ -155,8 +169,11 @@ def evaluate(dataset: Path, threshold: float, output: Path | None) -> None:
         )
         sys.exit(1)
 
+    # Create session ID for Langfuse grouping
+    session_id = f"eval_{datetime.now().strftime('%Y%m%d_%H%M%S')}" if traced else None
+
     # Run evaluation
-    report = run_evaluation(pipeline, dataset)
+    report = run_evaluation(pipeline, dataset, session_id=session_id)
 
     # Display report
     _display_report(report, threshold)
@@ -200,6 +217,15 @@ def evaluate(dataset: Path, threshold: float, output: Path | None) -> None:
         with open(output, "w") as f:
             json.dump(results_data, f, indent=2)
         console.print(f"\n[dim]Results saved to: {output}[/]")
+
+    # Flush traces if using traced pipeline
+    if traced and hasattr(pipeline, "flush_traces"):
+        pipeline.flush_traces()
+        if session_id:
+            console.print(
+                f"\n[dim]Langfuse session: {session_id}[/]\n"
+                f"[dim]View at: http://localhost:3000 → Sessions → {session_id}[/]"
+            )
 
     # Exit with error code if failing (for CI)
     if not report.is_passing(threshold):
