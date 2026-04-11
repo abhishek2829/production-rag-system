@@ -75,7 +75,11 @@ class TracedRAGPipeline(RAGPipeline):
             logger.info("TracedRAGPipeline initialized WITHOUT tracing")
 
     def query(
-        self, question: str, top_k: int | None = None
+        self,
+        question: str,
+        top_k: int | None = None,
+        session_id: str | None = None,
+        user_id: str | None = None,
     ) -> tuple[RAGResponse, CitationReport]:
         """Query the RAG system — same as parent, but with tracing.
 
@@ -83,11 +87,16 @@ class TracedRAGPipeline(RAGPipeline):
         The only difference: we start/stop a stopwatch around each step
         and record the timing to Langfuse.
 
+        Args:
+            question: The user's question.
+            top_k: Override for number of chunks.
+            session_id: Groups related queries in Langfuse dashboard.
+            user_id: Tags the query with who asked it.
+
         If tracing is disabled (Langfuse down, keys missing, turned off),
         this behaves IDENTICALLY to the parent's query() method.
         """
         # If tracing is not enabled, just use the parent's method directly.
-        # No overhead, no changes, exactly the same as before.
         if not self._tracer.is_enabled:
             return super().query(question, top_k=top_k)
 
@@ -97,7 +106,9 @@ class TracedRAGPipeline(RAGPipeline):
 
         # ===== START RECORDING =====
         # Tell Langfuse: "A new query just started"
-        trace = self._tracer.create_trace(question)
+        trace = self._tracer.create_trace(
+            question, session_id=session_id, user_id=user_id
+        )
 
         logger.info("Traced query: %s", question)
 

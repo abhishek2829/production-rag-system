@@ -58,22 +58,38 @@ class LangfuseTracer:
     def is_enabled(self) -> bool:
         return self._enabled
 
-    def create_trace(self, query: str, name: str = "rag-query") -> object | None:
+    def create_trace(
+        self,
+        query: str,
+        name: str = "rag-query",
+        session_id: str | None = None,
+        user_id: str | None = None,
+    ) -> object | None:
         """Start a new trace for a query.
 
-        In Langfuse v4, a trace is created using start_observation()
-        which returns an observation object we can attach child spans to.
+        Args:
+            query: The user's question.
+            name: Name for this trace type.
+            session_id: Groups related queries together (e.g., "eval_run_001").
+                        All traces with the same session_id appear as a group
+                        in the Langfuse dashboard.
+            user_id: Who made this query (e.g., "abhishek", "eval_bot").
+                     Lets you filter the dashboard by user.
         """
         if not self._enabled or not self._client:
             return None
 
         try:
-            # In v4, we use start_observation with as_type="span" at the top level
-            # This creates a trace automatically and returns a span we can nest under
+            metadata: dict = {"source": "traced_pipeline"}
+            if session_id:
+                metadata["session_id"] = session_id
+            if user_id:
+                metadata["user_id"] = user_id
+
             trace = self._client.start_observation(
                 name=name,
                 input={"query": query},
-                metadata={"source": "traced_pipeline"},
+                metadata=metadata,
             )
             logger.debug("Created trace for: '%s...'", query[:50])
             return trace
